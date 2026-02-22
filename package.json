@@ -1,0 +1,16 @@
+{
+  "name": "openshell",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter desktop dev",
+    "build": "pnpm --filter desktop build",
+    "tauri": "pnpm --filter desktop tauri",
+    "tauri:build": "pnpm --filter desktop tauri build",
+    "test": "pnpm --filter desktop test"
+  }
+}

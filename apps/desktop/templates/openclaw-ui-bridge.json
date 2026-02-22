@@ -1,0 +1,12 @@
+{
+  "id": "openclaw-ui-bridge",
+  "name": "OpenClaw UI Bridge",
+  "description": "Agent with bridge service for local UI integration.",
+  "image": "ghcr.io/openclaw/openclaw-ui-bridge:latest",
+  "env_schema": [
+    { "key": "OPENCLAW_API_KEY", "label": "API Key", "required": true, "secret": true, "default": "" },
+    { "key": "BRIDGE_PORT", "label": "Bridge Port", "required": false, "secret": false, "default": "8081" }
+  ],
+  "ports": ["8081:8081"],
+  "volumes": ["./bridge:/app/bridge"]
+}

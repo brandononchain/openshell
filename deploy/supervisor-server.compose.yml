@@ -1,0 +1,16 @@
+services:
+  supervisor-server:
+    build:
+      context: ..
+      dockerfile: apps/supervisor-server/Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - supervisor_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SUPERVISOR_DATA_DIR=/data
+    restart: unless-stopped
+
+volumes:
+  supervisor_data:
