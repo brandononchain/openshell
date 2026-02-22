@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
 import { Button, Card, Dialog, DialogContent, DialogTrigger, Input } from '@/components/ui';
+import { useTargetsStore } from '@/store/targets-store';
 
 export function NewAgentDialog() {
   const queryClient = useQueryClient();
-  const templates = useQuery({ queryKey: ['templates'], queryFn: api.listTemplates });
+  const selectedTargetId = useTargetsStore((s) => s.selectedTargetId);
+  const client = useTargetsStore((s) => s.getClient)();
+
+  const templates = useQuery({ queryKey: ['templates', selectedTargetId], queryFn: () => client.listTemplates() });
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [name, setName] = useState('');
   const [imageOverride, setImageOverride] = useState('');
@@ -14,9 +17,9 @@ export function NewAgentDialog() {
   const tpl = useMemo(() => templates.data?.find((t) => t.id === selectedTemplate) ?? templates.data?.[0], [templates.data, selectedTemplate]);
 
   const mutation = useMutation({
-    mutationFn: () => api.createAgentFromTemplate({ template_id: tpl!.id, name, env_values: envValues, image_override: imageOverride || undefined }),
+    mutationFn: () => client.createAgentFromTemplate({ template_id: tpl!.id, name, env_values: envValues, image_override: imageOverride || undefined }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['agents'] });
+      await queryClient.invalidateQueries({ queryKey: ['agents', selectedTargetId] });
       setName('');
       setImageOverride('');
       setEnvValues({});

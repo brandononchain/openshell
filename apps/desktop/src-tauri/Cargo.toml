@@ -25,6 +25,7 @@ tokio = { version = "1", features = ["process", "io-util", "sync", "rt-multi-thr
 tokio-util = "0.7"
 uuid = { version = "1", features = ["v4", "serde"] }
 zip = "2"
+supervisor-core = { path = "../../../crates/supervisor-core" }
 
 [dev-dependencies]
 tempfile = "3"

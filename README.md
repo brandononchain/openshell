@@ -1,69 +1,92 @@
 # OpenShell
 
-OpenShell is a cross-platform Tauri desktop app for running OpenClaw agents locally with Docker.
+OpenShell is a cross-platform Tauri desktop app for running OpenClaw agents with **Local** and **Remote Supervisor** modes.
 
-## Core features
+## Modes
 
-- Mission Control dashboard for agent lifecycle operations
-- Template-first agent wizard (`openclaw-default`, `openclaw-ui-bridge`)
-- SQLite-backed agent registry with runtime sync fields
-- Docker diagnostics (binary, daemon, compose flavor + fix hints)
-- Logs streaming (`stdout` + `stderr`) and embedded xterm terminal
-- Safe ops allowlist + container shell attach (container-only, no host shell)
-- Export/import agent bundles (`.zip`)
-- Observability-lite via `docker stats --no-stream`
-- Auto-update support with Tauri updater
+- **Local mode**: Desktop runs supervisor logic locally (Docker on your machine).
+- **Remote mode**: Desktop connects to `supervisor-server` over HTTP/WS with Bearer token auth and RBAC.
 
-## Prerequisites
+## Monorepo structure
 
-1. Node.js 20+
-2. pnpm 9+
-3. Rust stable toolchain
-4. Docker Desktop (or Docker Engine + Compose plugin)
+- `apps/desktop` — Tauri desktop app
+- `apps/supervisor-server` — standalone remote supervisor service (axum)
+- `crates/supervisor-core` — shared supervisor models, RBAC, mission step validation
 
-## Development
+## Desktop quick start (local mode)
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-## Build distributables
+## Build desktop bundles
 
 ```bash
 pnpm tauri build
 ```
 
-## Release automation
+## Remote supervisor deployment
 
-- Workflow: `.github/workflows/release.yml`
-- Triggers:
-  - tag push `v*`
-  - manual `workflow_dispatch`
-- Matrix builds for Linux/macOS/Windows
-- Bundles are uploaded to GitHub Releases on tag builds
+### Build/run with Docker compose
 
-## Updater notes
-
-- Updater configured in `apps/desktop/src-tauri/tauri.conf.json`
-- Endpoint points to GitHub release feed JSON (`latest.json`)
-- Settings panel includes:
-  - current app version
-  - check for updates
-  - download and install update
-
-### Example update feed (`latest.json`)
-
-```json
-{
-  "version": "0.1.1",
-  "notes": "Bug fixes and stability improvements",
-  "pub_date": "2026-01-01T00:00:00Z",
-  "platforms": {
-    "darwin-aarch64": {
-      "signature": "...",
-      "url": "https://github.com/openclaw/openshell/releases/download/v0.1.1/OpenShell.app.tar.gz"
-    }
-  }
-}
+```bash
+docker compose -f deploy/supervisor-server.compose.yml up -d --build
 ```
+
+The server listens on `:8080` and stores data in `/data` volume.
+
+### API
+
+- `GET /v1/health`
+- `GET/POST /v1/agents`
+- `POST /v1/agents/:id/start|stop|restart`
+- `DELETE /v1/agents/:id?remove_volumes=true`
+- `GET /v1/templates`
+- `GET/POST /v1/missions`
+- `POST /v1/missions/:id/run`
+- `DELETE /v1/missions/:id`
+- `POST /v1/webhooks/:hook_id`
+- `WS /v1/events`
+- Owner token APIs:
+  - `POST /v1/tokens`
+  - `GET /v1/tokens`
+  - `DELETE /v1/tokens/:id`
+
+## Auth + RBAC
+
+Bearer token auth is enforced server-side.
+
+Roles:
+- `viewer`: GET-only
+- `operator`: viewer + start/stop/restart + run mission
+- `admin`: operator + create/delete agent + mission management
+- `owner`: admin + token management
+
+Desktop stores remote target tokens in-memory in this MVP branch; production should persist in OS keychain keyed by target id.
+
+## Targets UI (desktop)
+
+Top bar includes target selector:
+- Local target pre-configured
+- Add remote target with name, base URL, token
+- Test connection via `/v1/health`
+
+## Missions
+
+Mission schema supports step types:
+- `start_agents([ids])`
+- `stop_agents([ids])`
+- `wait_for_status(agent_id, status, timeout_seconds)`
+- `tail_logs_until(agent_id, contains, timeout_seconds)`
+- `run_ops(agent_id, cmd_allowlisted)`
+- `http_notify(url, method, body)`
+
+Server validates steps and exposes mission endpoints + webhook triggers.
+
+## Releases + updater
+
+- CI workflow: `.github/workflows/release.yml`
+- Triggered on tag `v*` and manual dispatch
+- Matrix builds on Windows/macOS/Linux
+- Tauri updater configured in `apps/desktop/src-tauri/tauri.conf.json`

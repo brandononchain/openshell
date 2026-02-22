@@ -12,6 +12,7 @@ use chrono::{DateTime, Utc};
 use keyring::Entry;
 use serde::{Deserialize, Serialize};
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
+use supervisor_core::project_name as core_project_name;
 use tauri::{AppHandle, Emitter};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -906,7 +907,7 @@ fn parse_env_string(env: &str) -> HashMap<String, String> {
         .collect()
 }
 fn project_name(agent_id: &str) -> String {
-    format!("openshell-{}", agent_id.chars().take(8).collect::<String>())
+    core_project_name(agent_id)
 }
 fn default_compose(agent_id: &str, agent_name: &str, image: &str) -> String {
     format!("services:\n  openclaw-agent:\n    image: {image}\n    restart: unless-stopped\n    env_file:\n      - .env\n    command: [\"agent\", \"run\"]\n    labels:\n      openshell.agent_id: \"{agent_id}\"\n      openshell.agent_name: \"{agent_name}\"\n")
