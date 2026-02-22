@@ -1,20 +1,18 @@
 # OpenShell
 
-OpenShell is a cross-platform Tauri desktop app for running OpenClaw agents locally with Docker. It provides:
+OpenShell is a cross-platform Tauri desktop app for running OpenClaw agents locally with Docker.
+
+## Core features
 
 - Mission Control dashboard for agent lifecycle operations
-- Agent template + env registry persisted in SQLite
-- Live logs streaming from Docker Compose (stdout + stderr)
-- Embedded xterm.js ops console with strict allowlist commands
-- Local app-data managed agent workdirs and compose/env generation
-
-## Tech Stack
-
-- **Desktop shell**: Tauri v2 (Rust backend)
-- **UI**: React + TypeScript + Vite + Tailwind + shadcn-style primitives
-- **Terminal UI**: xterm.js
-- **Data**: SQLite + sqlx migrations
-- **Runtime orchestration**: Docker + Docker Compose (`docker compose` fallback `docker-compose`)
+- Template-first agent wizard (`openclaw-default`, `openclaw-ui-bridge`)
+- SQLite-backed agent registry with runtime sync fields
+- Docker diagnostics (binary, daemon, compose flavor + fix hints)
+- Logs streaming (`stdout` + `stderr`) and embedded xterm terminal
+- Safe ops allowlist + container shell attach (container-only, no host shell)
+- Export/import agent bundles (`.zip`)
+- Observability-lite via `docker stats --no-stream`
+- Auto-update support with Tauri updater
 
 ## Prerequisites
 
@@ -30,22 +28,42 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` launches the Vite frontend for the Tauri desktop app.
-
 ## Build distributables
 
 ```bash
 pnpm tauri build
 ```
 
-Produces OS-specific distributables for Windows/macOS/Linux (depending on host toolchains).
+## Release automation
 
-## MVP capabilities
+- Workflow: `.github/workflows/release.yml`
+- Triggers:
+  - tag push `v*`
+  - manual `workflow_dispatch`
+- Matrix builds for Linux/macOS/Windows
+- Bundles are uploaded to GitHub Releases on tag builds
 
-- Docker checks: installation, daemon running/permissions (`docker info`), compose availability, fix hints.
-- Agent management: create, import folder, duplicate, delete (optional `down -v`).
-- Agent lifecycle: start/stop/restart via Compose with explicit project names.
-- Authoritative status sync from labeled containers (`openshell.agent_id`, `openshell.agent_name`).
-- Logs follow streaming via Tauri events, including stream metadata (`stdout`/`stderr`).
-- Ops command allowlist (`docker ps`, compose up/down/logs, show config, open folder).
-- Local persistence in SQLite and per-agent filesystem directory.
+## Updater notes
+
+- Updater configured in `apps/desktop/src-tauri/tauri.conf.json`
+- Endpoint points to GitHub release feed JSON (`latest.json`)
+- Settings panel includes:
+  - current app version
+  - check for updates
+  - download and install update
+
+### Example update feed (`latest.json`)
+
+```json
+{
+  "version": "0.1.1",
+  "notes": "Bug fixes and stability improvements",
+  "pub_date": "2026-01-01T00:00:00Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "signature": "...",
+      "url": "https://github.com/openclaw/openshell/releases/download/v0.1.1/OpenShell.app.tar.gz"
+    }
+  }
+}
+```

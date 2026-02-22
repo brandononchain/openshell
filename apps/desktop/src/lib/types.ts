@@ -24,9 +24,26 @@ export interface DockerStatus {
   error?: string;
 }
 
-export interface CreateAgentPayload {
+export interface TemplateField {
+  key: string;
+  label: string;
+  required: boolean;
+  secret: boolean;
+  default?: string;
+}
+
+export interface AgentTemplate {
+  id: string;
   name: string;
-  template: string;
-  image_override?: string;
-  env: Record<string, string>;
+  description: string;
+  image: string;
+  env_schema: TemplateField[];
+  ports: string[];
+  volumes: string[];
+}
+
+export interface AgentStats {
+  cpu: string;
+  memory: string;
+  uptime: string;
 }

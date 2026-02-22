@@ -21,5 +21,15 @@
   "bundle": {
     "active": true,
     "targets": "all"
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/openclaw/openshell/releases/latest/download/latest.json"
+      ],
+      "dialog": true,
+      "pubkey": "UPDATE_PUBLIC_KEY_PLACEHOLDER"
+    }
   }
 }

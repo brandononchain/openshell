@@ -1,0 +1,12 @@
+{
+  "id": "openclaw-default",
+  "name": "OpenClaw Default",
+  "description": "Default single-agent runtime template.",
+  "image": "ghcr.io/openclaw/openclaw:latest",
+  "env_schema": [
+    { "key": "OPENCLAW_API_KEY", "label": "API Key", "required": true, "secret": true, "default": "" },
+    { "key": "OPENCLAW_LOG_LEVEL", "label": "Log Level", "required": false, "secret": false, "default": "info" }
+  ],
+  "ports": ["8080:8080"],
+  "volumes": ["./data:/app/data"]
+}
