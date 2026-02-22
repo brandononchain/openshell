@@ -1,16 +1,16 @@
-name: Release (stable)
+name: Release (nightly)
 
 on:
-  workflow_dispatch:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  tauri:
+  tauri-nightly:
     strategy:
       fail-fast: false
       matrix:
@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile || pnpm install
 
-      - name: Build + Release via tauri-action
+      - name: Build + publish nightly via tauri-action
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -52,9 +52,9 @@ jobs:
         with:
           projectPath: apps/desktop
           tauriScript: pnpm tauri
-          tagName: ${{ github.ref_name }}
-          releaseName: OpenShell ${{ github.ref_name }}
-          releaseBody: Stable release for OpenShell.
+          tagName: nightly
+          releaseName: nightly
+          releaseBody: Automated nightly prerelease build.
           releaseDraft: false
-          prerelease: false
+          prerelease: true
           includeUpdaterJson: true
