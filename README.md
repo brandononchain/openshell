@@ -4,7 +4,7 @@ OpenShell is a cross-platform Tauri desktop app for running OpenClaw agents loca
 
 - Mission Control dashboard for agent lifecycle operations
 - Agent template + env registry persisted in SQLite
-- Live logs streaming from Docker Compose
+- Live logs streaming from Docker Compose (stdout + stderr)
 - Embedded xterm.js ops console with strict allowlist commands
 - Local app-data managed agent workdirs and compose/env generation
 
@@ -40,18 +40,12 @@ pnpm tauri build
 
 Produces OS-specific distributables for Windows/macOS/Linux (depending on host toolchains).
 
-## Project structure
-
-- `apps/desktop/src`: React frontend (Mission Control, wizard, detail tabs)
-- `apps/desktop/src-tauri/src/lib.rs`: Tauri command surface
-- `apps/desktop/src-tauri/src/supervisor.rs`: Docker supervisor, SQLite registry, logs streamer, ops allowlist
-- `apps/desktop/src-tauri/migrations`: SQLite schema
-
 ## MVP capabilities
 
-- Docker installation and compose command detection
-- Agent CRUD-lite: create + list
-- Agent lifecycle: start/stop/restart via Compose
-- Logs follow streaming via Tauri events (`agent-log-line`)
-- Ops command allowlist (`docker ps`, compose up/down/logs, show config, open folder)
-- Local persistence in SQLite and per-agent filesystem directory
+- Docker checks: installation, daemon running/permissions (`docker info`), compose availability, fix hints.
+- Agent management: create, import folder, duplicate, delete (optional `down -v`).
+- Agent lifecycle: start/stop/restart via Compose with explicit project names.
+- Authoritative status sync from labeled containers (`openshell.agent_id`, `openshell.agent_name`).
+- Logs follow streaming via Tauri events, including stream metadata (`stdout`/`stderr`).
+- Ops command allowlist (`docker ps`, compose up/down/logs, show config, open folder).
+- Local persistence in SQLite and per-agent filesystem directory.

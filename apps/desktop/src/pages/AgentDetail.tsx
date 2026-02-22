@@ -5,18 +5,22 @@ import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 import { api } from '@/lib/api';
 import type { Agent } from '@/lib/types';
-import { Button, Card, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui';
+import { Button, Card, Input, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui';
+
+interface LogEntry { line: string; stream: string }
 
 export function AgentDetail({ agent }: { agent: Agent }) {
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [config, setConfig] = useState<{ env: string; compose: string; metadata: string } | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [search, setSearch] = useState('');
   const terminalEl = useRef<HTMLDivElement | null>(null);
   const termRef = useRef<Terminal | null>(null);
 
   const opsMutation = useMutation({
     mutationFn: (cmd: string) => api.runOpsCommand(agent.id, cmd),
     onSuccess: (result) => {
-      termRef.current?.writeln(`$ ${result.code === 0 ? 'ok' : 'error'}\\r\\n${result.stdout}${result.stderr}`);
+      termRef.current?.writeln(`$ ${result.code === 0 ? 'ok' : 'error'}\r\n${result.stdout}${result.stderr}`);
     },
     onError: (err) => termRef.current?.writeln(`Error: ${String(err)}`)
   });
@@ -25,8 +29,8 @@ export function AgentDetail({ agent }: { agent: Agent }) {
     let mounted = true;
     const setup = async () => {
       await api.streamLogsStart(agent.id);
-      const unlisten = await api.onLogLine(agent.id, (line) => {
-        if (mounted) setLogs((prev) => [...prev.slice(-400), line]);
+      const unlisten = await api.onLogLine(agent.id, (line, stream) => {
+        if (mounted && !paused) setLogs((prev) => [...prev.slice(-500), { line, stream }]);
       });
       return unlisten;
     };
@@ -39,7 +43,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
       void api.streamLogsStop(agent.id);
       unlisten?.();
     };
-  }, [agent.id]);
+  }, [agent.id, paused]);
 
   useEffect(() => {
     void api.getAgentConfig(agent.id).then(setConfig);
@@ -62,7 +66,8 @@ export function AgentDetail({ agent }: { agent: Agent }) {
     opsMutation.mutate(cmd);
   };
 
-  const logText = useMemo(() => logs.join('\n'), [logs]);
+  const filteredLogs = useMemo(() => logs.filter((l) => l.line.toLowerCase().includes(search.toLowerCase())), [logs, search]);
+  const logText = useMemo(() => filteredLogs.map((x) => `[${x.stream}] ${x.line}`).join('\n'), [filteredLogs]);
 
   return (
     <Card>
@@ -79,8 +84,16 @@ export function AgentDetail({ agent }: { agent: Agent }) {
           <p>Workdir: {agent.workdir}</p>
           <p>Compose: {agent.compose_file}</p>
           <p>Template: {agent.template}</p>
+          <p>Container: {agent.last_seen_container_id ?? '-'}</p>
+          <p>Exit code: {agent.exit_code ?? '-'}</p>
+          <p className="text-red-400">{agent.last_error}</p>
         </TabsContent>
         <TabsContent value="logs" className="pt-4">
+          <div className="mb-2 flex gap-2">
+            <Button onClick={() => setPaused((p) => !p)}>{paused ? 'Resume' : 'Pause'}</Button>
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search logs" />
+            <Button onClick={() => void navigator.clipboard.writeText(logText)}>Copy</Button>
+          </div>
           <pre className="h-80 overflow-auto rounded border border-slate-700 bg-slate-950 p-3 text-xs">{logText}</pre>
         </TabsContent>
         <TabsContent value="terminal" className="space-y-3 pt-4">

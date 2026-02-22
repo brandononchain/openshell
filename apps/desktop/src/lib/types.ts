@@ -10,14 +10,17 @@ export interface Agent {
   created_at: string;
   updated_at: string;
   last_error?: string | null;
-  image?: string;
+  last_seen_container_id?: string | null;
+  exit_code?: number | null;
 }
 
 export interface DockerStatus {
   installed: boolean;
-  compose: 'docker compose' | 'docker-compose' | null;
+  daemon_running: boolean;
+  compose_available: boolean;
   version?: string;
   error?: string;
+  fix_hint?: string;
 }
 
 export interface CreateAgentPayload {
@@ -25,4 +28,10 @@ export interface CreateAgentPayload {
   template: string;
   image_override?: string;
   env: Record<string, string>;
+}
+
+export interface ImportAgentPayload {
+  folder_path: string;
+  name?: string;
+  template?: string;
 }

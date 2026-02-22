@@ -3,7 +3,7 @@ mod supervisor;
 use std::{path::PathBuf, sync::Arc};
 
 use serde::Serialize;
-use supervisor::{AppState, CreateAgentPayload, DockerStatus, OpsResult};
+use supervisor::{AppState, CreateAgentPayload, DockerStatus, ImportAgentPayload, OpsResult};
 use tauri::{Manager, State};
 
 #[derive(Serialize)]
@@ -39,6 +39,38 @@ async fn create_agent(
 }
 
 #[tauri::command]
+async fn delete_agent(
+    state: State<'_, Arc<AppState>>,
+    agent_id: String,
+    down_with_volumes: bool,
+) -> Result<(), String> {
+    state
+        .delete_agent(&agent_id, down_with_volumes)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn duplicate_agent(
+    state: State<'_, Arc<AppState>>,
+    agent_id: String,
+    new_name: String,
+) -> Result<supervisor::Agent, String> {
+    state
+        .duplicate_agent(&agent_id, new_name)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn import_agent(
+    state: State<'_, Arc<AppState>>,
+    payload: ImportAgentPayload,
+) -> Result<supervisor::Agent, String> {
+    state.import_agent(payload).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 async fn start_agent(state: State<'_, Arc<AppState>>, agent_id: String) -> Result<(), String> {
     state
         .start_agent(&agent_id)
@@ -57,6 +89,22 @@ async fn restart_agent(state: State<'_, Arc<AppState>>, agent_id: String) -> Res
         .restart_agent(&agent_id)
         .await
         .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn sync_agent_status(
+    state: State<'_, Arc<AppState>>,
+    agent_id: String,
+) -> Result<(), String> {
+    state
+        .sync_agent_status(&agent_id)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn sync_all_statuses(state: State<'_, Arc<AppState>>) -> Result<(), String> {
+    state.sync_all_statuses().await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -117,6 +165,7 @@ async fn get_agent_config(
 async fn reset_app_data(state: State<'_, Arc<AppState>>) -> Result<(), String> {
     state.reset_app_data().await.map_err(|e| e.to_string())
 }
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -132,9 +181,14 @@ pub fn run() {
             check_docker,
             list_agents,
             create_agent,
+            delete_agent,
+            duplicate_agent,
+            import_agent,
             start_agent,
             stop_agent,
             restart_agent,
+            sync_agent_status,
+            sync_all_statuses,
             stream_logs_start,
             stream_logs_stop,
             run_ops_command,
