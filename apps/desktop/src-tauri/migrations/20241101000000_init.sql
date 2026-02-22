@@ -7,9 +7,7 @@ CREATE TABLE IF NOT EXISTS agents (
   status TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  last_error TEXT,
-  last_seen_container_id TEXT,
-  exit_code INTEGER
+  last_error TEXT
 );
 
 CREATE TABLE IF NOT EXISTS settings (

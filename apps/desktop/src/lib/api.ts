@@ -1,15 +1,15 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import type { Agent, CreateAgentPayload, DockerStatus, ImportAgentPayload } from './types';
+import type { Agent, CreateAgentPayload, DockerStatus } from './types';
 
 export const api = {
   getAppInfo: () => invoke<{ app_data_dir: string; platform: string }>('get_app_info'),
   checkDocker: () => invoke<DockerStatus>('check_docker'),
   listAgents: () => invoke<Agent[]>('list_agents'),
   createAgent: (payload: CreateAgentPayload) => invoke<Agent>('create_agent', { payload }),
-  deleteAgent: (agentId: string, downWithVolumes: boolean) => invoke<void>('delete_agent', { agentId, downWithVolumes }),
+  deleteAgent: (agentId: string, removeVolumes: boolean) => invoke<void>('delete_agent', { agentId, removeVolumes }),
   duplicateAgent: (agentId: string, newName: string) => invoke<Agent>('duplicate_agent', { agentId, newName }),
-  importAgent: (payload: ImportAgentPayload) => invoke<Agent>('import_agent', { payload }),
+  importAgent: (folderPath: string, name: string) => invoke<Agent>('import_agent', { folderPath, name }),
   startAgent: (agentId: string) => invoke<void>('start_agent', { agentId }),
   stopAgent: (agentId: string) => invoke<void>('stop_agent', { agentId }),
   restartAgent: (agentId: string) => invoke<void>('restart_agent', { agentId }),

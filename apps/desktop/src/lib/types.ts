@@ -18,9 +18,10 @@ export interface DockerStatus {
   installed: boolean;
   daemon_running: boolean;
   compose_available: boolean;
+  fix_hint?: string;
+  compose_bin?: string;
   version?: string;
   error?: string;
-  fix_hint?: string;
 }
 
 export interface CreateAgentPayload {
@@ -28,10 +29,4 @@ export interface CreateAgentPayload {
   template: string;
   image_override?: string;
   env: Record<string, string>;
-}
-
-export interface ImportAgentPayload {
-  folder_path: string;
-  name?: string;
-  template?: string;
 }

@@ -3,7 +3,7 @@ mod supervisor;
 use std::{path::PathBuf, sync::Arc};
 
 use serde::Serialize;
-use supervisor::{AppState, CreateAgentPayload, DockerStatus, ImportAgentPayload, OpsResult};
+use supervisor::{AppState, CreateAgentPayload, DockerStatus, OpsResult};
 use tauri::{Manager, State};
 
 #[derive(Serialize)]
@@ -42,10 +42,10 @@ async fn create_agent(
 async fn delete_agent(
     state: State<'_, Arc<AppState>>,
     agent_id: String,
-    down_with_volumes: bool,
+    remove_volumes: bool,
 ) -> Result<(), String> {
     state
-        .delete_agent(&agent_id, down_with_volumes)
+        .delete_agent(&agent_id, remove_volumes)
         .await
         .map_err(|e| e.to_string())
 }
@@ -65,9 +65,13 @@ async fn duplicate_agent(
 #[tauri::command]
 async fn import_agent(
     state: State<'_, Arc<AppState>>,
-    payload: ImportAgentPayload,
+    folder_path: String,
+    name: String,
 ) -> Result<supervisor::Agent, String> {
-    state.import_agent(payload).await.map_err(|e| e.to_string())
+    state
+        .import_agent(folder_path, name)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
